@@ -24,6 +24,17 @@ local function insecure_load_file()
     
 end
 
+local function insecure_load_crossings(index)
+    local mod_path = minetest.get_modpath("latticesurgery")
+    local json_file_path = mod_path .. "/crossings/crossings_" .. index ..".json"
+    f = ie.io.open(json_file_path)
+    s = f:read("a")
+    ie.io.close(f)
+    return minetest.parse_json(s)
+    
+end
+
+
 local function sleep(n)
     ie.os.execute("sleep " .. tonumber(n))
 end
@@ -56,6 +67,14 @@ local function is_dead_cell(cell)
         return true
     end
     return false
+end
+
+local function min(a,b)
+    if a > b then
+        return b
+    else 
+        return a
+    end
 end
 
 local function place_layer(starting_point, slices)
@@ -117,7 +136,7 @@ for j = 0, 15, 1 do
                 4/8,
                 3/8 + bitstring[4] * 1/8},
         },
-        groups = {cracky = 1, falling_node=2}
+        groups = {cracky = 1} -- , falling_node=2}
     })
 
     minetest.register_node(string.format("latticesurgery:distillation_%s", array_to_s(bitstring)), {
@@ -135,7 +154,7 @@ for j = 0, 15, 1 do
                     4/8,
                     3/8 + bitstring[4] * 1/8},
             },
-        groups = {cracky = 1, falling_node=2}
+        groups = {cracky = 1} -- , falling_node=2}
     })
 
     for i = 1, 12, 1 do
@@ -154,7 +173,7 @@ for j = 0, 15, 1 do
                     3/8,
                     3/8 + bitstring[4] * 1/8},
             },
-            groups = {cracky = 1, falling_node=2}
+            groups = {cracky = 1} -- , falling_node=2}
         })
     end
 end
@@ -163,7 +182,7 @@ minetest.register_node("latticesurgery:dead_cell", {
     description = "Dead Cell",
     tiles = {"dead.png"},
     drawtype = "glasslike",
-    groups = {cracky = 1, falling_node=2}
+    groups = {cracky = 1} -- , falling_node=2}
 })
 
 
@@ -177,4 +196,14 @@ minetest.register_chatcommand("do_compile", {
     func = do_compile
 })
 
+
+local function crossings(name, param)
+    minetest.chat_send_all(dump(param))
+    local slices = insecure_load_crossings(param)
+    place_layer({x=-250,y=9,z=-260}, slices)
+end
+
+minetest.register_chatcommand("crossings", {
+    func = crossings
+})
 

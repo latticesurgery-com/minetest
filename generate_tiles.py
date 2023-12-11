@@ -34,4 +34,4 @@ if __name__ == '__main__':
         generate_grainy_image(color, 16, 16, 0, f'textures/routing_{i+1}.png')
     generate_grainy_image(distillation_color, 16, 16, 0, f'textures/distillation.png')
     generate_grainy_image(base_colors[0], 16, 16, 10, f'textures/dead.png')
-    generate_grainy_image(qubit_color, 16, 16, 0, f'textures/qubit.png')
+    generate_grainy_image(qubit_color, 16, 16, 10, f'textures/qubit.png')
