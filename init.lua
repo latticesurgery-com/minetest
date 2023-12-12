@@ -26,7 +26,7 @@ end
 
 local function insecure_load_crossings(index)
     local mod_path = minetest.get_modpath("latticesurgery")
-    local json_file_path = mod_path .. "/crossings/crossings_" .. index ..".json"
+    local json_file_path = mod_path .. "/crossings/crossings_3d_" .. index ..".json"
     f = ie.io.open(json_file_path)
     s = f:read("a")
     ie.io.close(f)
@@ -47,7 +47,7 @@ local function array_to_s(a)
     return r
 end
 
-local function stritch_border(border, patch_type)
+local function stitch_border(border, patch_type)
     if border == "AncillaJoin" then return true end
     if border == "SolidStiched" then return true end
     if border == "DashedStiched" then return true end
@@ -63,32 +63,50 @@ local function is_dead_cell(cell)
         cell['edges']['Top'] == "None" and
         cell['edges']['Bottom'] == "None" and
         cell['edges']['Left'] == "None" and
-        cell['edges']['Right'] == "None" then
+        cell['edges']['Right'] == "None" 
+    then
         return true
     end
     return false
 end
 
-local function min(a,b)
+local function max(a,b)
     if a > b then
-        return b
-    else 
         return a
+    else 
+        return b
     end
+end
+
+local function max_key(start, ll)
+    acc = start
+    for k,v in pairs(ll) do
+        acc = max(acc, k)
+    end
+    return acc
 end
 
 local function place_layer(starting_point, slices)
     for t = 1, #slices do
-        for r = 1, #slices[t] do
-            for c = 1, #slices[t][r] do
+        for r = 1, max_key(0, slices[t]) do
+            for c = 1, max_key(0, slices[t][r]) do
                 local value = slices[t][r][c]
                 if value and (not is_dead_cell(value)) and value['patch_type'] ~= 'DistillationQubit' then
                     
-                    local connections = {0, 0, 0, 0};
-                    if stritch_border(value['edges']['Top'], value['patch_type']) then connections[1] = 1 end
-                    if stritch_border(value['edges']['Bottom'], value['patch_type']) then connections[2] = 1 end
-                    if stritch_border(value['edges']['Left'], value['patch_type']) then connections[3] = 1 end
-                    if stritch_border(value['edges']['Right'], value['patch_type']) then connections[4] = 1 end
+                    local connections = {0, 0, 0, 0, 1, 1};
+                    if stitch_border(value['edges']['Top'], value['patch_type']) then connections[1] = 1 end
+                    if stitch_border(value['edges']['Bottom'], value['patch_type']) then connections[2] = 1 end
+                    if stitch_border(value['edges']['Left'], value['patch_type']) then connections[3] = 1 end
+                    if stitch_border(value['edges']['Right'], value['patch_type']) then connections[4] = 1 end
+
+                    if value['patch_type'] == 'Ancilla' then
+                        if not value['routing_connect_to_prec'] then
+                            connections[5] = 0;
+                        end
+                        if not value['routing_connect_to_next'] then
+                            connections[6] = 0;
+                        end
+                    end
 
                     local name = string.format("latticesurgery:routing_%i_%s",t%12+1, array_to_s(connections))
                     if is_dead_cell(value) then
@@ -113,9 +131,11 @@ NUM_ROUTING_COLOURS = 12
 
 
 
-for j = 0, 15, 1 do
-    -- i to bit string
+for j = 0, 63, 1 do
+    -- j to bit string
     local bitstring = {
+        math.floor(j / 32) % 2,
+        math.floor(j / 16) % 2,
         math.floor(j / 8) % 2,
         math.floor(j / 4) % 2,
         math.floor(j / 2) % 2,
@@ -130,10 +150,10 @@ for j = 0, 15, 1 do
             drawtype = "nodebox",
             fixed = {
                 -3/8 - bitstring[1] * 1/8, 
-                -4/8, 
+                -3/8 - bitstring[5] * 1/8,
                 -3/8 - bitstring[3] * 1/8, 
                 3/8 + bitstring[2] * 1/8,
-                4/8,
+                3/8 + bitstring[6] * 1/8,
                 3/8 + bitstring[4] * 1/8},
         },
         groups = {cracky = 1} -- , falling_node=2}
@@ -148,10 +168,10 @@ for j = 0, 15, 1 do
                 drawtype = "nodebox",
                 fixed = {
                     -3/8 - bitstring[1] * 1/8, 
-                    -4/8, 
+                    -3/8 - bitstring[5] * 1/8,
                     -3/8 - bitstring[3] * 1/8, 
                     3/8 + bitstring[2] * 1/8,
-                    4/8,
+                    3/8 + bitstring[6] * 1/8,
                     3/8 + bitstring[4] * 1/8},
             },
         groups = {cracky = 1} -- , falling_node=2}
@@ -167,10 +187,10 @@ for j = 0, 15, 1 do
                 drawtype = "nodebox",
                 fixed = {
                     -3/8 - bitstring[1] * 1/8, 
-                    -3/8, 
+                    -3/8 - bitstring[5] * 1/8,
                     -3/8 - bitstring[3] * 1/8, 
                     3/8 + bitstring[2] * 1/8,
-                    3/8,
+                    3/8 + bitstring[6] * 1/8,
                     3/8 + bitstring[4] * 1/8},
             },
             groups = {cracky = 1} -- , falling_node=2}
@@ -200,7 +220,9 @@ minetest.register_chatcommand("do_compile", {
 local function crossings(name, param)
     minetest.chat_send_all(dump(param))
     local slices = insecure_load_crossings(param)
-    place_layer({x=-250,y=9,z=-260}, slices)
+    -- place_layer({x=-250,y=9,z=-260}, slices)
+    local player = minetest.get_player_by_name(name)
+    place_layer(player:get_pos(), slices)
 end
 
 minetest.register_chatcommand("crossings", {
