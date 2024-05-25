@@ -16,7 +16,7 @@ ie = minetest.request_insecure_environment()
 
 local function insecure_load_file()
     local mod_path = minetest.get_modpath("latticesurgery")
-    local json_file_path = mod_path .. "/demo2.json"
+    local json_file_path = mod_path .. "/crossings/grover_3.json"
     f = ie.io.open(json_file_path)
     s = f:read("a")
     ie.io.close(f)
@@ -86,10 +86,10 @@ local function max_key(start, ll)
     return acc
 end
 
-local function place_layer(starting_point, slices)
+local function place_layers(starting_point, slices)
     for t = 1, #slices do
-        for r = 1, max_key(0, slices[t]) do
-            for c = 1, max_key(0, slices[t][r]) do
+        for r, rval in pairs(slices[t]) do
+            for c, cval in  pairs(slices[t][r]) do
                 local value = slices[t][r][c]
                 if value and (not is_dead_cell(value)) and value['patch_type'] ~= 'DistillationQubit' then
                     
@@ -118,6 +118,10 @@ local function place_layer(starting_point, slices)
                     end
 
                     local position = add_vectors(starting_point, { x = r, y = t, z = c })
+                    local existing_node = minetest.get_node(position)
+                    if existing_node.name ~= "air" then
+                        minetest.remove_node(position)
+                    end
                     minetest.place_node(position,  { name = name })
                 end
             end
@@ -206,26 +210,45 @@ minetest.register_node("latticesurgery:dead_cell", {
 })
 
 
-local function do_compile(name, param)
-    local slices = insecure_load_file()
+
+LS_LOCAL_START_POS = nil
+
+local function set_pos(name, param)
     local player = minetest.get_player_by_name(name)
-    place_layer(player:get_pos(), slices)
+    LS_LOCAL_START_POS = player:get_pos()
 end
 
-minetest.register_chatcommand("do_compile", {
-    func = do_compile
+minetest.register_chatcommand("set_pos", {
+    func = set_pos
 })
 
-
 local function crossings(name, param)
-    minetest.chat_send_all(dump(param))
     local slices = insecure_load_crossings(param)
-    -- place_layer({x=-250,y=9,z=-260}, slices)
-    local player = minetest.get_player_by_name(name)
-    place_layer(player:get_pos(), slices)
+    if LS_LOCAL_START_POS ~= nil then
+        place_layers(LS_LOCAL_START_POS, slices)
+    else
+        local player = minetest.get_player_by_name(name)
+        place_layers(player:get_pos(), slices)
+    end
+
 end
 
 minetest.register_chatcommand("crossings", {
     func = crossings
+})
+
+
+local function do_compile(name, param)
+    local slices = insecure_load_file()
+    if LS_LOCAL_START_POS ~= nil then
+        place_layers(LS_LOCAL_START_POS, slices)
+    else
+        local player = minetest.get_player_by_name(name)
+        place_layers(player:get_pos(), slices)
+    end
+end
+
+minetest.register_chatcommand("do_compile", {
+    func = do_compile
 })
 
