@@ -1,4 +1,7 @@
+
 # A Minetest mod to view Lattice Surgery Computations in 3d
+
+![FirstViewOf3dSlicing](https://github.com/latticesurgery-com/minetest/assets/36427091/6567bdf6-8b3b-459c-9af1-b839da6cde70)
 
 ## Getting started
 
