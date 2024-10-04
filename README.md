@@ -15,6 +15,11 @@
    c. From the mods menu, select `latticesurgery` and click the `enabled` checkmark
 
 
+### In the `.minetest` folder
+`touch minetest.conf`
+and include the following line
+`secure.enable_security = false`
+
 ### Run the Mod
  1. Select the world you just created and click `Play`
  2. Once the world loaded, press `t` and then type `/do_compile`
