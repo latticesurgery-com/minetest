@@ -6,8 +6,9 @@
 ## Getting started
 
 ### Setup
- 1. colne `git@github.com:latticesurgery-com/minetest.git` (or HTTPS equivalent for no ssh key) into `~/.minetest/mods/latticesurgery`
+ 1. clone `git@github.com:latticesurgery-com/minetest.git` (or HTTPS equivalent for no ssh key) into `~/.minetest/mods/latticesurgery`
     * Note that the `~/.minetest/mods/latticesurgery` should be the top level directory of the git repo, i.e. the lua file should be `~/.minetest/mods/latticesurgery/init.lua`
+ 2. run `python3 generate_tyles.py` for which you might need to `pip3 install pillow`
  2. IDE support for lua with minetest is not great yet. I use VSCode with the lua language server extesion from the marketplace
  3. Mod setup:
    a. Create a new world (set `flat` for world generator)
@@ -15,7 +16,7 @@
    c. From the mods menu, select `latticesurgery` and click the `enabled` checkmark
 
 
-### In the `.minetest` folder
+### Before starting minetest, in the `.minetest` folder
 `touch minetest.conf`
 and include the following line
 `secure.enable_security = false`
